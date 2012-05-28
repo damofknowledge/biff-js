@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=320,height=480,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Biff.js Demo: Catcher</title>
+
+<link rel="stylesheet" href="demo.css">
+</head>
+
+<body id="expandable">
+<div id="container">
+	<div id="content">
+        <div id="gameover">Game Over</div>
+    </div>
+</div>
+<script src="../biff.js"></script>
+<script>
+// custom selector
+	function $(id){ return document.getElementById(id); }
+	
+//create new game with Width x Height stage, append to parent or body by default
+    var Game = new Biff(320, 480, 'content');
+        
+// chain parameters
+	Game
+		.controlsOn()				// sets up div for score and basic controls
+		.scoreOn(100)				// show score and set max score for winning condition
+		.canvasOff()       			// disable canvas; DOM rendering is default
+		.cssAnimationOff()			// disable CSS3 Animations // multiple animations on one page degrades performance quickly.
+		.init()             		// now init Game elements   
+	
+//create sprite with (src, width, height, # of animation frames (0 start), # of animations in sprite (0 start))
+	var player = new Game.spr('catcher.png', 100, 41, 0, 0),
+		playerHit = new Game.spr('catcher-hit.png', 100, 41, 1, 0); // cache hit sprite for .change();
+
+		playerHit.position(-100,-100);
+		
+//init player
+	var playerInitX = 110,
+		playerInitY = 409;
+	
+	player.x = playerInitX;
+	player.y = playerInitY;
+	player.position(player.x, player.y, 1).speed(0);
+	
+// remember player hit zone for future calculations
+	var pzone = player.zone(15, 30, 0, 30).zone();
+		
+//remember size for later calculations. use as: psize.width, psize.height
+	var psize = player.size();
+
+//set position of sprite to (x, y, z-index, then speed of redrawing the sprite frames
+//extend sprite object with some additional custom variables
+	var items = [],
+		maxItems = 10,
+		maxEnemies = 3,
+		numEnemies = 0;
+	for (i=0, ii=maxItems;i<ii;i+=1) {
+		var randomItem = Game.rnd(1,2);
+		if (randomItem === 2) { 
+			numEnemies++; 
+			if (numEnemies > maxEnemies) {
+				randomItem = 1;
+			}
+		}
+		
+		items[i] = new Game.spr('item'+randomItem+'.png', 50, 50, 0, 0);
+		items[i].x = Game.rnd(0,250);
+		items[i].y = Game.rnd(60,480) * -1;
+		items[i].position(items[i].x, items[i].y, 2).speed(8);
+		items[i].direction = 1;
+		switch (randomItem) {
+			case 1 : 	items[i].type = 1;
+						items[i].val = -1;
+						break;
+			case 2 : 	items[i].type = 2;
+						items[i].val = 1;
+						break;
+									
+		}
+		// how fast the item moves, in px
+		items[i].movement = Game.rnd(2,5);
+		items[i].invincible = false;
+	}
+		
+//create additional function to be called on each frame of main game loop
+	var additionalLoop = function(){
+		for (i=0, ii=maxItems;i<ii;i+=1) {
+			if (items[i].y > 420-psize.height) { 
+				items[i].invincible = true;
+				if (items[i].y > 480) { 
+					items[i].y=-100;
+					items[i].x = Game.rnd(0,250);
+					items[i].invincible = false;
+				}
+			}
+			items[i].y+=items[i].direction*items[i].movement;
+			items[i].position(items[i].x, items[i].y);
+		}
+	}
+	
+//now add that function to the loop and start checking for the collisions
+	Game.hook(additionalLoop).hitsOn();
+	
+	
+// add hit event handler
+for (i=0, ii=maxItems;i<ii;i+=1) {
+  var el = items[i];
+  el.hit(player, (function(i, el) {
+    return function() {
+      if (!el.invincible && !player.invincible) {
+			Game.score(el.val);
+			el.y = -100;
+			el.x = Game.rnd(0,250);
+			el.position(el.x, el.y);
+			if (el.type === 1) {
+				player.invincible = true;
+				player.change('catcher-hit.png', 100, 41, 1, 0).speed(8);
+				player.callback(function(){
+					player.invincible = false; 
+					player.change('catcher.png', 100, 41, 0, 0).speed(0);
+					player.zone(pzone.t,pzone.r,pzone.b,pzone.l);
+				}, 8);
+			}
+			if (Game.score()===Game.scoreOn()) {
+				finishGame();
+			}
+		}
+    }
+  })(i, el), false);
+}	
+	
+// player control	
+	var curX, curY, xMousePos, yMousePos;
+	if ('ontouchstart' in document.documentElement) {
+		$('sprite'+player.id()).addEventListener('touchmove', function(event) {
+			if(Game.running()) {
+				event.preventDefault();
+				var el = event.target;
+				var touch = event.touches[0];
+				curX = touch.pageX - this.offsetLeft;
+				curY = touch.pageY - this.offsetTop;
+				if(curX < (0 + (psize.width/2))) return;
+				if(curX > (320 - (psize.width/2))) return;
+				player.x = curX - psize.width/2;
+				player.position(player.x, player.y); 
+			}
+		}, false);
+	} else {
+		document.onmousemove = function(event) {
+			if(Game.running()) {
+				xMousePos = event.pageX;
+				yMousePos = event.pageY;
+				if(xMousePos < (0 + (psize.width/2))) return;
+				if(xMousePos > (320 - (psize.width/2))) return;
+				if(yMousePos < (0 + (psize.height/2))) return;
+				if(yMousePos > (480 - (psize.height/2))) return;
+				player.x = event.pageX - psize.width/2; 
+				//player.y = event.pageY - psize.height/2; 
+				player.position(player.x, player.y); 
+			}
+		}
+	}
+	
+// basic controls added with Game.controlsOn(); Up to you how to handle events.
+	$('biff_start').addEventListener('click', function(event) {
+		startGame();	
+	}, false);
+	$('biff_pause').addEventListener('click', function(event) {
+		pauseGame();
+	}, false);
+	$('biff_replay').addEventListener('click', function(event) {
+		resetGame();
+	}, false);
+	
+	var startGame = function() {
+		$('biff_start').style.display = 'none';
+		$('biff_pause').style.display = 'block';
+		Game.on();
+	}
+	var pauseGame = function() {
+		if(Game.running()) {
+			Game.off();
+			$('biff_pause').innerHTML = 'Play';
+		} else {
+			Game.on();
+			$('biff_pause').innerHTML = 'Pause';
+		}
+	}
+	var finishGame = function() {
+		for (i=0, ii=maxItems;i<ii;i+=1) {
+			items[i].x = 0;
+			items[i].y = 480;
+			items[i].position(items[i].x, items[i].y, 2);
+		}
+		$('gameover').style.display = 'block';
+		Game.off();
+		$('biff_pause').style.display = 'none';
+		$('biff_replay').style.display = 'block';
+		
+	}
+	var resetGame = function() {
+		if(!Game.running()) {
+			var resetScore = Game.score()*-1;
+			Game.score(resetScore);
+			$('gameover').style.display = 'none';
+			player.x = playerInitX;
+			player.y = playerInitY;
+			player.change('catcher.png', 100, 41, 0, 0).position(player.x, player.y, 1).speed(0).zone(pzone.t,pzone.r,pzone.b,pzone.l);
+			player.invincible = false; 
+			
+			player.noHits();
+			
+			// reset our items
+			for (i=0, ii=maxItems;i<ii;i+=1) {
+				items[i].x = Game.rnd(0,250);
+				items[i].y = Game.rnd(60,480) * -1;
+				items[i].position(items[i].x, items[i].y, 2).speed(8);
+				items[i].movement = Game.rnd(2,5);
+				items[i].invincible = false;
+			}
+			
+			$('biff_pause').style.display = 'block';
+			$('biff_replay').style.display = 'none';
+			Game.on();
+		}
+	}
+</script>
+</body>
+</html>

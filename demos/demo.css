@@ -1,0 +1,122 @@
+* { margin:0;padding:0;border:0;outline:0;vertical-align:baseline;background:transparent;-webkit-touch-callout:none;-webkit-user-select:none;-webkit-text-size-adjust:none;}
+p { margin:10px 0px; }
+a { color: #007ab0; }
+.center { text-align:center; }
+
+#container {
+	position:absolute;
+	overflow:hidden;
+	height:480px;	
+	width:320px;
+	left:0;
+	top:0;
+}
+
+#content {
+	position:absolute;
+	overflow:hidden;
+	height:480px;
+	width:320px;
+	top:0;
+	left:0;
+	background:#444;
+}
+
+#bg {
+	position:absolute;
+	top:0px; 
+	left:0px;
+	overflow:hidden;
+	background:#444;
+	width:320px; 
+	height:480px;
+}
+
+/* custom element styles */
+.text-box {
+	position:absolute;
+	top:0;
+	left:0;
+	display:none;
+	z-index:10;
+	font-family:Helvetica, Arial, sans-serif;
+	background:#EEE;
+	padding: 5px;
+	border:1px solid #555;
+	border-radius:5px;
+}
+
+#gameover {
+	position:absolute;
+	top:50%;
+	left:50%;
+	margin:-19px 0 0 -130px;
+	background:rgba(0,0,0,0.5);
+	color:#FFF;
+	font-family:Helvetica, Arial, sans-serif;
+	padding:10px;
+	border-radius:5px;
+	width:240px;
+	text-align:center;
+	font-size:14px;
+	display:none;
+	
+}
+
+#biff_stage {
+	position:absolute;
+	overflow:hidden;
+}
+
+#biff_controls {
+	z-index:1001;
+	position:absolute;
+	bottom:0px;
+	left:0px;
+	background:rgba(0,0,0,0.5);
+	height:20px;
+	padding:5px;
+	width:100%;
+	font-family:Helvetica, Arial, sans-serif;
+	font-size:12px;
+	font-weight:bold; 
+	color:#fff;
+}
+
+#biff_score {
+	font-family:Helvetica, Arial, sans-serif;
+	font-size:12px;
+	font-weight:bold; 
+	color:#fff;
+	float:left;
+	padding:2px;
+	margin:0px 2px;
+}
+
+#biff_start {
+	background:#999;
+	color:#000;
+	padding:2px;
+	margin:0px 2px;
+	float:left;
+}
+
+#biff_pause {
+	background:#999;
+	color:#000;
+	padding:2px;
+	margin:0px 2px;
+	float:left;
+	/* hidden on 1st run */
+	display:none;
+}
+
+#biff_replay {
+	background:#999;
+	color:#000;
+	padding:2px;
+	margin:0px 2px;
+	float:left;
+	/* hidden on 1st run */
+	display:none;
+}
